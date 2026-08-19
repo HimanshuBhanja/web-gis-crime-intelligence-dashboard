@@ -2,6 +2,20 @@
 
 An interactive Web GIS dashboard for visualizing and comparing crime intensity across Indian states and union territories using normalized crime density (`cases_per_km2`).
 
+# 🚀 Standalone Dashboard
+
+**Download and open the complete standalone dashboard directly in your browser:**
+
+👉 **[Download Standalone Dashboard (Google Drive)](https://drive.google.com/file/d/1VgLT-19lNXuajLz4wjCYd_gd8CI7__9X/view?usp=drive_link)**
+
+> The standalone version contains the normalized crime GeoJSON data embedded directly into the HTML. Due to its large file size, it is hosted on Google Drive instead of GitHub.
+
+---
+
+## Project Overview
+
+An interactive Web GIS dashboard for visualizing and comparing crime intensity across Indian states and union territories using normalized crime density (`cases_per_km2`).
+
 ## Project Overview
 
 The project integrates **PostgreSQL/PostGIS, Python, GeoServer, QGIS, WMS/WFS, and OpenLayers** into an end-to-end spatial crime intelligence workflow.
