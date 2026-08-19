@@ -2,7 +2,7 @@
 
 An interactive Web GIS dashboard for visualizing and comparing crime intensity across Indian states and union territories using normalized crime density (`cases_per_km2`).
 
-# 🚀 Standalone Dashboard
+## 🚀 Standalone Dashboard
 
 **Download and open the complete standalone dashboard directly in your browser:**
 
