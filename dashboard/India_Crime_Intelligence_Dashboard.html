@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>India Crime Intelligence Dashboard</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+<script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+  --bg-deep:#010812;
+  --bg-panel:rgba(1,16,40,0.95);
+  --accent-cyan:#00f5ff;
+  --accent-gold:#f5c518;
+  --accent-red:#ff3355;
+  --accent-green:#00ff88;
+  --text-primary:#e0f0ff;
+  --text-dim:#6a9fc0;
+  --border-glow:rgba(0,245,255,0.25);
+  --grid-line:rgba(0,245,255,0.06);
+}
+
+body{
+  margin:0;
+  overflow:hidden;
+  font-family:'Rajdhani',sans-serif;
+  background:var(--bg-deep);
+  color:var(--text-primary);
+}
+
+body::before{
+  content:"";
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(
+    0deg,transparent,transparent 2px,
+    rgba(0,245,255,0.012) 2px,rgba(0,245,255,0.012) 4px
+  );
+  pointer-events:none;z-index:9999;
+}
+
+body::after{
+  content:"";
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;z-index:0;
+}
+
+/* HEADER */
+.header{
+  height:68px;
+  background:linear-gradient(90deg,#010812,#011830,#010a22);
+  color:white;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid var(--border-glow);
+  position:relative;z-index:1000;
+  box-shadow:0 0 40px rgba(0,245,255,0.08);
+}
+
+.header::after{
+  content:"";
+  position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent);
+}
+
+.logo-area{display:flex;align-items:center;gap:12px;}
+
+.logo-icon{
+  width:40px;height:40px;
+  border:2px solid var(--accent-cyan);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:var(--accent-cyan);
+  box-shadow:0 0 16px rgba(0,245,255,0.4),inset 0 0 12px rgba(0,245,255,0.08);
+  animation:pulse-icon 3s ease-in-out infinite;
+  font-family:'Share Tech Mono',monospace;
+}
+
+@keyframes pulse-icon{
+  0%,100%{box-shadow:0 0 16px rgba(0,245,255,0.4),inset 0 0 12px rgba(0,245,255,0.08);}
+  50%{box-shadow:0 0 28px rgba(0,245,255,0.75),inset 0 0 20px rgba(0,245,255,0.15);}
+}
+
+.title{
+  font-family:'Orbitron',monospace;
+  font-size:15px;font-weight:900;
+  letter-spacing:3px;text-transform:uppercase;
+  color:var(--accent-cyan);
+  text-shadow:0 0 20px rgba(0,245,255,0.6);
+}
+
+.title-sub{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;letter-spacing:4px;
+  color:var(--text-dim);text-transform:uppercase;margin-top:2px;
+}
+
+.header-center{display:flex;align-items:center;gap:18px;}
+
+.status-badge{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,255,136,0.08);
+  border:1px solid rgba(0,255,136,0.3);
+  border-radius:20px;padding:5px 12px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;color:var(--accent-green);letter-spacing:1px;
+}
+
+.status-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent-green);
+  box-shadow:0 0 8px var(--accent-green);
+  animation:blink 1.4s ease-in-out infinite;
+}
+
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+.clock{
+  font-family:'Share Tech Mono',monospace;
+  font-size:15px;color:var(--accent-gold);letter-spacing:2px;
+}
+
+.controls{display:flex;align-items:center;gap:10px;}
+
+.controls label{
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;letter-spacing:2px;
+  color:var(--text-dim);text-transform:uppercase;
+}
+
+select{
+  background:rgba(0,245,255,0.06);
+  border:1px solid rgba(0,245,255,0.35);
+  color:var(--accent-cyan);
+  padding:8px 30px 8px 12px;
+  border-radius:6px;
+  font-family:'Orbitron',monospace;
+  font-size:11px;font-weight:700;
+  cursor:pointer;outline:none;letter-spacing:1px;
+  transition:all 0.3s;appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2300f5ff'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+}
+
+select:hover,select:focus{
+  border-color:var(--accent-cyan);
+  box-shadow:0 0 16px rgba(0,245,255,0.25);
+  background-color:rgba(0,245,255,0.12);
+}
+
+select option{background:#011830;color:var(--accent-cyan);}
+
+/* MAIN LAYOUT */
+.main-layout{
+  display:flex;
+  height:calc(100vh - 68px);
+  position:relative;z-index:1;
+}
+
+/* SIDE PANEL */
+.side-panel{
+  width:200px;
+  background:var(--bg-panel);
+  border-right:1px solid var(--border-glow);
+  padding:14px 12px;
+  display:flex;flex-direction:column;gap:12px;
+  flex-shrink:0;
+  overflow:hidden;
+}
+
+.panel-label{
+  font-family:'Orbitron',monospace;
+  font-size:9px;letter-spacing:3px;
+  color:var(--text-dim);text-transform:uppercase;
+  padding-bottom:7px;
+  border-bottom:1px solid var(--border-glow);
+  display:flex;align-items:center;gap:7px;
+}
+
+.panel-label::before{
+  content:"";width:5px;height:5px;border-radius:50%;
+  background:var(--accent-cyan);
+  box-shadow:0 0 6px var(--accent-cyan);
+  flex-shrink:0;
+}
+
+/* STAT CARD */
+.stat-card{
+  background:rgba(0,245,255,0.04);
+  border:1px solid rgba(0,245,255,0.12);
+  border-radius:8px;padding:10px 12px;
+  position:relative;overflow:hidden;transition:all 0.3s;
+}
+
+.stat-card::before{
+  content:"";
+  position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent);
+  opacity:0.5;
+}
+
+.stat-card:hover{
+  border-color:rgba(0,245,255,0.3);
+  background:rgba(0,245,255,0.07);
+}
+
+.stat-lbl{
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:2px;
+  color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;
+}
+
+.stat-val{
+  font-family:'Orbitron',monospace;
+  font-size:18px;font-weight:900;
+  color:var(--accent-gold);
+  text-shadow:0 0 14px rgba(245,197,24,0.5);
+  letter-spacing:1px;
+}
+
+.stat-val.small{font-size:12px;letter-spacing:0;}
+
+.stat-meta{
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;color:var(--text-dim);margin-top:2px;
+}
+
+/* RISK BARS */
+.mini-bar-row{
+  display:flex;align-items:center;gap:5px;
+  margin-bottom:5px;
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+}
+
+.mini-bar-label{width:34px;color:var(--text-dim);text-align:right;flex-shrink:0;}
+
+.mini-bar-track{
+  flex:1;height:6px;
+  background:rgba(0,245,255,0.06);
+  border-radius:3px;overflow:hidden;
+}
+
+.mini-bar-fill{
+  height:100%;border-radius:3px;
+  transition:width 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+.mini-bar-val{width:22px;color:var(--accent-cyan);font-size:9px;text-align:right;}
+
+/* MAPS AREA */
+.maps-area{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+}
+
+.maps-row{display:flex;flex:1;}
+
+/* MAP BOX */
+.map-box{
+  flex:1;position:relative;overflow:hidden;
+  border-right:1px solid var(--border-glow);
+}
+
+.map-box:last-child{border-right:none;}
+
+.map-box::before{
+  content:"";
+  position:absolute;top:8px;left:8px;
+  width:20px;height:20px;
+  border-top:2px solid var(--accent-cyan);
+  border-left:2px solid var(--accent-cyan);
+  z-index:600;pointer-events:none;
+}
+
+.map{width:100%;height:100%;}
+
+/* SCAN LINE */
+.scan-line{
+  position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,rgba(0,245,255,0.65),transparent);
+  z-index:400;pointer-events:none;
+  animation:scan 4s ease-in-out infinite;
+}
+
+.map-box:nth-child(2) .scan-line{animation-delay:1.3s;}
+.map-box:nth-child(3) .scan-line{animation-delay:2.6s;}
+
+@keyframes scan{
+  0%{top:0;opacity:1;}90%{top:100%;opacity:0.2;}100%{top:100%;opacity:0;}
+}
+
+/* YEAR BADGE */
+.year-title{
+  position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  z-index:1000;
+  background:rgba(1,16,40,0.92);
+  padding:7px 20px;border-radius:8px;
+  font-family:'Orbitron',monospace;
+  font-size:22px;font-weight:900;letter-spacing:2px;
+  backdrop-filter:blur(12px);
+  border:1px solid var(--border-glow);
+  box-shadow:0 0 20px rgba(0,245,255,0.12);
+  color:var(--accent-cyan);
+  text-shadow:0 0 18px rgba(0,245,255,0.7);
+  display:flex;flex-direction:column;align-items:center;
+  white-space:nowrap;
+}
+
+.year-sub{
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;letter-spacing:3px;
+  color:var(--text-dim);text-transform:uppercase;
+}
+
+/* POPUP */
+.ol-popup{
+  position:absolute;
+  background:rgba(1,16,40,0.97);
+  padding:13px 15px;border-radius:10px;
+  min-width:170px;max-width:195px;
+  box-shadow:0 0 28px rgba(0,245,255,0.2);
+  border:1px solid var(--accent-cyan);
+  backdrop-filter:blur(16px);
+  font-family:'Share Tech Mono',monospace;
+}
+
+.ol-popup::before{
+  content:"";
+  position:absolute;top:0;left:0;right:0;height:2px;
+  border-radius:10px 10px 0 0;
+  background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent);
+}
+
+.popup-title{
+  font-family:'Orbitron',monospace;
+  font-size:10px;font-weight:700;
+  color:var(--accent-red);
+  margin-bottom:10px;padding-bottom:6px;
+  border-bottom:1px solid rgba(0,245,255,0.15);
+  letter-spacing:2px;text-transform:uppercase;
+}
+
+.popup-item{
+  margin-bottom:5px;font-size:10px;line-height:1.5;
+  display:flex;justify-content:space-between;
+}
+
+.popup-label{color:var(--text-dim);letter-spacing:1px;}
+.popup-value{color:var(--accent-cyan);font-weight:700;}
+
+/* LEGEND */
+.legend{
+  position:absolute;bottom:38px;right:12px;
+  background:rgba(1,16,40,0.92);
+  padding:11px 13px;border-radius:10px;
+  z-index:1000;width:190px;
+  backdrop-filter:blur(12px);
+  border:1px solid var(--border-glow);
+  box-shadow:0 0 20px rgba(0,245,255,0.1);
+}
+
+.legend h3{
+  margin:0 0 9px 0;
+  font-family:'Orbitron',monospace;
+  font-size:8px;letter-spacing:3px;
+  color:var(--text-dim);text-transform:uppercase;
+}
+
+.legend-item{
+  display:flex;align-items:center;
+  margin-bottom:5px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;color:var(--text-dim);
+}
+
+.color-box{
+  width:15px;height:9px;border-radius:2px;
+  margin-right:7px;flex-shrink:0;
+  border:1px solid rgba(255,255,255,0.1);
+}
+
+/* STATUS BAR */
+.status-bar{
+  height:28px;
+  background:rgba(1,16,40,0.95);
+  border-top:1px solid var(--border-glow);
+  display:flex;align-items:center;
+  padding:0 14px;gap:18px;flex-shrink:0;
+}
+
+.sb-item{
+  display:flex;align-items:center;gap:6px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;color:var(--text-dim);letter-spacing:1px;
+}
+
+.sb-item strong{color:var(--accent-cyan);}
+.sb-divider{width:1px;height:14px;background:var(--border-glow);}
+
+.data-stream{
+  margin-left:auto;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;color:rgba(0,245,255,0.35);white-space:nowrap;
+}
+
+.ol-attribution{display:none!important;}
+.ol-zoom{display:none!important;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo-area">
+    <div class="logo-icon">&#9873;</div>
+    <div>
+      <div class="title">India Crime Intelligence Dashboard</div>
+      <div class="title-sub">National Crime Records Bureau &middot; India</div>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      LIVE ANALYSIS
+    </div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+
+  <div class="controls">
+    <label>Crime Type:</label>
+    <select id="crimeType">
+      <option value="burglary">Burglary</option>
+      <option value="theft">Theft</option>
+      <option value="robbery">Robbery</option>
+      <option value="dacoity">Dacoity</option>
+      <option value="criminal_breach_of_trust">Criminal Breach of Trust</option>
+      
+    </select>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main-layout">
+
+  <!-- SIDE PANEL -->
+  <div class="side-panel">
+
+    <div class="panel-label">Active Intel</div>
+
+    <div class="stat-card">
+      <div class="stat-lbl">Crime Category</div>
+      <div class="stat-val small" id="liveCrime">BURGLARY</div>
+      <div class="stat-meta">CURRENTLY TRACKING</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-lbl">Years Compared</div>
+      <div class="stat-val" style="font-size:13px;">01 &bull; 05 &bull; 10</div>
+      <div class="stat-meta">TEMPORAL ANALYSIS</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-lbl">States Monitored</div>
+      <div class="stat-val">36</div>
+      <div class="stat-meta">STATES &amp; UNION TERRITORIES</div>
+    </div>
+
+    <div class="panel-label">Top Risk States</div>
+
+    <div id="riskBars">
+      <!-- filled by JS -->
+    </div>
+
+    <div class="panel-label" style="margin-top:auto;">System</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);line-height:1.9;">
+      <div>&bull; WMS: GeoServer 2.x</div>
+      <div>&bull; DB: PostGIS / PostgreSQL</div>
+      <div>&bull; MAP: OpenLayers 9</div>
+      <div>&bull; SRS: EPSG:3857</div>
+    </div>
+
+  </div>
+
+  <!-- MAPS AREA -->
+  <div class="maps-area">
+
+    <div class="maps-row">
+
+      <!-- MAP 1 -->
+      <div class="map-box">
+        <div class="scan-line"></div>
+        <div class="year-title">2001<span class="year-sub">Baseline</span></div>
+        <div id="map1" class="map"></div>
+      </div>
+
+      <!-- MAP 2 -->
+      <div class="map-box">
+        <div class="scan-line"></div>
+        <div class="year-title">2005<span class="year-sub">Mid-Period</span></div>
+        <div id="map2" class="map"></div>
+      </div>
+
+      <!-- MAP 3 -->
+      <div class="map-box">
+        <div class="scan-line"></div>
+        <div class="year-title">2010<span class="year-sub">Current Era</span></div>
+        <div id="map3" class="map"></div>
+      </div>
+
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <div class="sb-item">&bull; <strong>SRS:</strong> EPSG:3857</div>
+      <div class="sb-divider"></div>
+      <div class="sb-item">&bull; <strong>FORMAT:</strong> WMS / WFS</div>
+      <div class="sb-divider"></div>
+      <div class="sb-item">&bull; <strong>CENTER:</strong> 78.96&deg;E 22.59&deg;N</div>
+      <div class="data-stream" id="dataStream">INITIALIZING...</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DYNAMIC NORMALIZED LEGEND -->
+<div class="legend">
+  <h3 id="legendTitle">Cases / km²</h3>
+  <div id="legendItems"></div>
+</div>
+
+<!-- POPUPS -->
+<div id="popup1" class="ol-popup" style="display:none;"></div>
+<div id="popup2" class="ol-popup" style="display:none;"></div>
+<div id="popup3" class="ol-popup" style="display:none;"></div>
+
+<script>
+
+/* =====================================
+   CLOCK
+===================================== */
+function updateClock(){
+  var n = new Date();
+  document.getElementById('clock').textContent = n.toLocaleTimeString('en-IN',{hour12:false});
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+/* =====================================
+   DATA STREAM TICKER
+===================================== */
+var msgs = [
+  'FETCHING WMS TILE DATA...','SPATIAL JOIN COMPLETE · 36 STATES/UTS',
+  'CHOROPLETH RENDER: LAYER 2001','CHOROPLETH RENDER: LAYER 2005',
+  'CHOROPLETH RENDER: LAYER 2010','GEOSERVER RESPONSE: 200 OK',
+  'POSTGIS DENSITY QUERY EXECUTED','WFS FEATURE INFO ENDPOINT ACTIVE',
+  'EPSG:3857 PROJECTION VERIFIED'
+];
+var si = 0;
+function tickStream(){
+  document.getElementById('dataStream').textContent = msgs[si % msgs.length];
+  si++;
+}
+tickStream();
+setInterval(tickStream, 2800);
+
+/* =====================================
+   RISK DATA PER CRIME TYPE
+   (approximate relative index 0-10)
+===================================== */
+var riskData = {
+  burglary:[
+    {label:'U.P.',  val:9.5, pct:95, color:'linear-gradient(90deg,#ff3355,#ff6677)'},
+    {label:'MAH',   val:7.8, pct:78, color:'linear-gradient(90deg,#f5c518,#ffd740)'},
+    {label:'M.P.',  val:7.0, pct:70, color:'linear-gradient(90deg,#f5c518,#ffd740)'},
+    {label:'RAJ',   val:5.8, pct:58, color:'linear-gradient(90deg,#00f5ff,#00c8d0)'},
+    {label:'GUJ',   val:4.2, pct:42, color:'linear-gradient(90deg,#00f5ff,#00c8d0)'}
+  ],
+  theft:[
+    {label:'U.P.',  val:9.8, pct:98, color:'linear-gradient(90deg,#ff3355,#ff6677)'},
+    {label:'MAH',   val:8.5, pct:85, color:'linear-gradient(90deg,#ff3355,#ff6677)'},
+    {label:'DEL',   val:7.5, pct:75, color:'linear-gradient(90deg,#f5c518,#ffd740)'},
+    {label:'KAR',   val:6.2, pct:62, color:'linear-gradient(90deg,#f5c518,#ffd740)'},
+    {label:'TN',    val:5.0, pct:50, color:'linear-gradient(90deg,#00f5ff,#00c8d0)'}
+  ],
+  robbery:[
+    {label:'U.P.',  val:9.2, pct:92, color:'linear-gradient(90deg,#ff3355,#ff6677)'},
+    {label:'BIH',   val:8.0, pct:80, color:'linear-gradient(90deg,#ff3355,#ff6677)'},
+    {label:'M.P.',  val:6.5, pct:65, color:'linear-gradient(90deg,#f5c518,#ffd740)'},
+    {label:'RAJ',   val:5.5, pct:55, color:'linear-gradient(90deg,#00f5ff,#00c8d0)'},
+    {label:'HAR',   val:4.0, pct:40, color:'linear-gradient(90deg,#00f5ff,#00c8d0)'}
+  ],
+  dacoity:[
+    {label:'M.P.',  val:9.0, pct:90, color:'linear-gradient(90deg,#ff3355,#ff6677)'},
+    {label:'U.P.',  val:8.2, pct:82, color:'linear-gradient(90deg,#ff3355,#ff6677)'},
+    {label:'RAJ',   val:6.8, pct:68, color:'linear-gradient(90deg,#f5c518,#ffd740)'},
+    {label:'BIH',   val:5.5, pct:55, color:'linear-gradient(90deg,#00f5ff,#00c8d0)'},
+    {label:'MAH',   val:3.8, pct:38, color:'linear-gradient(90deg,#00f5ff,#00c8d0)'}
+  ],
+  propertycrime:[
+    {label:'U.P.',  val:9.6, pct:96, color:'linear-gradient(90deg,#ff3355,#ff6677)'},
+    {label:'MAH',   val:8.8, pct:88, color:'linear-gradient(90deg,#ff3355,#ff6677)'},
+    {label:'M.P.',  val:7.4, pct:74, color:'linear-gradient(90deg,#f5c518,#ffd740)'},
+    {label:'RAJ',   val:6.5, pct:65, color:'linear-gradient(90deg,#f5c518,#ffd740)'},
+    {label:'KAR',   val:5.2, pct:52, color:'linear-gradient(90deg,#00f5ff,#00c8d0)'}
+  ]
+};
+
+function renderRiskBars(crime){
+  var data = riskData[crime] || riskData['burglary'];
+  var html = '';
+  data.forEach(function(d){
+    html +=
+      '<div class="mini-bar-row">' +
+        '<span class="mini-bar-label">' + d.label + '</span>' +
+        '<div class="mini-bar-track">' +
+          '<div class="mini-bar-fill" style="width:' + d.pct + '%;background:' + d.color + ';"></div>' +
+        '</div>' +
+        '<span class="mini-bar-val">' + d.val + '</span>' +
+      '</div>';
+  });
+  document.getElementById('riskBars').innerHTML = html;
+}
+
+/* initial normalized dashboard state is initialized after all helper functions are defined */
+
+/* =====================================
+   INDIA CENTER
+===================================== */
+const indiaCenter = ol.proj.fromLonLat([78.9629,22.5937]);
+
+/* =====================================
+   DARK BASEMAP
+===================================== */
+function createBaseLayer(){
+  return new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      attributions: '© CARTO',
+      crossOrigin: 'anonymous'
+    })
+  });
+}
+
+/* =====================================
+   WMS CRIME LAYER
+===================================== */
+function createCrimeLayer(layerName){
+  return new ol.layer.Tile({
+    source: new ol.source.TileWMS({
+      url: 'http://localhost:8080/geoserver/crime/wms',
+      params:{
+        'LAYERS': layerName,
+        'VERSION': '1.1.1',
+        'FORMAT': 'image/png',
+        'TRANSPARENT': true,
+        'TILED': true
+      },
+      serverType: 'geoserver',
+      crossOrigin: 'anonymous'
+    }),
+    opacity: 0.85
+  });
+}
+
+/* =====================================
+   NORMALIZED CRIME CONFIGURATION
+   All values are cases per km².
+   One common scale is used for each crime
+   across 2001, 2005 and 2010.
+===================================== */
+
+var densityConfig = {
+  burglary: {
+    title: 'Burglary · Cases / km²',
+    labels: ['No Cases','Very Low','Low','Moderate','High','Very High'],
+    ranges: ['0','>0 – 0.0083','>0.0083 – 0.0204','>0.0204 – 0.0452','>0.0452 – 0.1372','>0.1372'],
+    colors: ['#F5F5F5','#FFFFCC','#FED976','#FEB24C','#FD8D3C','#E31A1C']
+  },
+  theft: {
+    title: 'Theft · Cases / km²',
+    labels: ['No Cases','Very Low','Low','Moderate','High','Very High'],
+    ranges: ['0','>0 – 0.0159','>0.0159 – 0.0635','>0.0635 – 0.1347','>0.1347 – 0.3901','>0.3901'],
+    colors: ['#F5F5F5','#FFFFCC','#FED976','#FEB24C','#FD8D3C','#E31A1C']
+  },
+  robbery: {
+    title: 'Robbery · Cases / km²',
+    labels: ['No Cases','Very Low','Low','Moderate','High','Very High'],
+    ranges: ['0','>0 – 0.0008','>0.0008 – 0.0049','>0.0049 – 0.0084','>0.0084 – 0.0140','>0.0140'],
+    colors: ['#F5F5F5','#FFFFCC','#FED976','#FEB24C','#FD8D3C','#E31A1C']
+  },
+  dacoity: {
+    title: 'Dacoity · Cases / km²',
+    labels: ['No Cases','Very Low','Low','Moderate','High','Very High'],
+    ranges: ['0','>0 – 0.0001','>0.0001 – 0.0009','>0.0009 – 0.0025','>0.0025 – 0.0068','>0.0068'],
+    colors: ['#F5F5F5','#FFFFCC','#FED976','#FEB24C','#FD8D3C','#E31A1C']
+  },
+  criminal_breach_of_trust: {
+    title: 'Criminal Breach of Trust · Cases / km²',
+    labels: ['No Cases','Very Low','Low','Moderate','High','Very High'],
+    ranges: ['0','>0 – 0.0008','>0.0008 – 0.0019','>0.0019 – 0.0067','>0.0067 – 0.0163','>0.0163'],
+    colors: ['#F5F5F5','#FFFFCC','#FED976','#FEB24C','#FD8D3C','#E31A1C']
+  }
+};
+
+function updateLegend(crime){
+  var cfg = densityConfig[crime] || densityConfig.burglary;
+  document.getElementById('legendTitle').textContent = cfg.title;
+  var html = '';
+  for(var i=0;i<cfg.labels.length;i++){
+    html +=
+      '<div class="legend-item">' +
+        '<div class="color-box" style="background:' + cfg.colors[i] + ';"></div>' +
+        '<span>' + cfg.labels[i] + ': ' + cfg.ranges[i] + '</span>' +
+      '</div>';
+  }
+  document.getElementById('legendItems').innerHTML = html;
+}
+
+/* GeoServer WFS endpoint for data-driven risk statistics */
+var geoserverWfsUrl = 'http://localhost:8080/geoserver/crime/ows';
+
+function normalizedLayerName(crime, year){
+  return 'crime:' + crime + '_' + year + '_norm';
+}
+
+function getFeatureProperties(crime, year){
+  var typeName = normalizedLayerName(crime, year);
+  var url = geoserverWfsUrl +
+    '?service=WFS&version=1.0.0&request=GetFeature' +
+    '&typeName=' + encodeURIComponent(typeName) +
+    '&outputFormat=application/json';
+
+  return fetch(url)
+    .then(function(r){
+      if(!r.ok) throw new Error('WFS HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data){
+      return (data.features || []).map(function(f){ return f.properties || {}; });
+    });
+}
+
+function updateRiskBarsFromWFS(crime){
+  var years = [2001,2005,2010];
+  Promise.all(years.map(function(y){ return getFeatureProperties(crime,y); }))
+    .then(function(results){
+      var rows = [];
+      results.forEach(function(props, idx){
+        props.forEach(function(p){
+          var density = Number(p.cases_per_km2);
+          if(Number.isFinite(density)){
+            rows.push({
+              state: p.state_name || 'Unknown',
+              year: years[idx],
+              density: density
+            });
+          }
+        });
+      });
+
+      rows.sort(function(a,b){ return b.density - a.density; });
+      var top = rows.slice(0,5);
+
+      if(!top.length){
+        document.getElementById('riskBars').innerHTML =
+          '<div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--text-dim);">NO DENSITY DATA</div>';
+        return;
+      }
+
+      var max = top[0].density || 1;
+      var html = '';
+
+      top.forEach(function(d){
+        var pct = Math.max(4, (d.density / max) * 100);
+        var barColor = d.density === max
+          ? 'linear-gradient(90deg,#ff3355,#ff6677)'
+          : 'linear-gradient(90deg,#f5c518,#ffd740)';
+
+        html +=
+          '<div class="mini-bar-row" title="' +
+            d.state + ' · ' + d.year + ' · ' + d.density.toFixed(4) + ' cases/km²">' +
+            '<span class="mini-bar-label">' + d.state.substring(0,8) + '</span>' +
+            '<div class="mini-bar-track">' +
+              '<div class="mini-bar-fill" style="width:' + pct + '%;background:' + barColor + ';"></div>' +
+            '</div>' +
+            '<span class="mini-bar-val">' + d.density.toFixed(2) + '</span>' +
+          '</div>';
+      });
+
+      document.getElementById('riskBars').innerHTML = html;
+    })
+    .catch(function(err){
+      console.error('WFS risk statistics error:', err);
+      document.getElementById('riskBars').innerHTML =
+        '<div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--accent-red);">WFS DATA UNAVAILABLE</div>';
+    });
+}
+
+/* =====================================
+   INITIAL LAYERS
+===================================== */
+let layer2001 = createCrimeLayer('crime:burglary_2001_norm');
+let layer2005 = createCrimeLayer('crime:burglary_2005_norm');
+let layer2010 = createCrimeLayer('crime:burglary_2010_norm');
+
+/* =====================================
+   MAP CREATION
+===================================== */
+function createMap(target, layer){
+  return new ol.Map({
+    target: target,
+    layers: [createBaseLayer(), layer],
+    controls: [],
+    view: new ol.View({
+      center: indiaCenter,
+      zoom: 4.5,
+      projection: 'EPSG:3857',
+      minZoom: 3,
+      maxZoom: 10
+    })
+  });
+}
+
+const map1 = createMap('map1', layer2001);
+const map2 = createMap('map2', layer2005);
+const map3 = createMap('map3', layer2010);
+
+/* =====================================
+   SYNC VIEWS
+===================================== */
+function syncViews(src, targets){
+  src.getView().on('change', function(){
+    var c = src.getView().getCenter();
+    var z = src.getView().getZoom();
+    var r = src.getView().getRotation();
+    targets.forEach(function(m){
+      m.getView().setCenter(c);
+      m.getView().setZoom(z);
+      m.getView().setRotation(r);
+    });
+  });
+}
+syncViews(map1,[map2,map3]);
+syncViews(map2,[map1,map3]);
+syncViews(map3,[map1,map2]);
+
+/* =====================================
+   UPDATE LAYERS + SIDE PANEL
+===================================== */
+function updateCrimeLayers(){
+  var crime = document.getElementById('crimeType').value;
+
+  layer2001.getSource().updateParams({'LAYERS':normalizedLayerName(crime,2001)});
+  layer2005.getSource().updateParams({'LAYERS':normalizedLayerName(crime,2005)});
+  layer2010.getSource().updateParams({'LAYERS':normalizedLayerName(crime,2010)});
+
+  document.getElementById('liveCrime').textContent =
+    crime.toUpperCase().replaceAll('_',' ');
+
+  /* update normalized density legend */
+  updateLegend(crime);
+
+  /* update top-risk statistics from the actual normalized WFS data */
+  updateRiskBarsFromWFS(crime);
+}
+
+document.getElementById('crimeType').addEventListener('change', updateCrimeLayers);
+
+/* INITIAL NORMALIZED DASHBOARD STATE */
+updateLegend('burglary');
+updateRiskBarsFromWFS('burglary');
+
+/* =====================================
+   OVERLAYS
+===================================== */
+const overlay1 = new ol.Overlay({element:document.getElementById('popup1'),positioning:'bottom-center',stopEvent:true});
+const overlay2 = new ol.Overlay({element:document.getElementById('popup2'),positioning:'bottom-center',stopEvent:true});
+const overlay3 = new ol.Overlay({element:document.getElementById('popup3'),positioning:'bottom-center',stopEvent:true});
+map1.addOverlay(overlay1);
+map2.addOverlay(overlay2);
+map3.addOverlay(overlay3);
+
+/* =====================================
+   POPUP FUNCTION
+===================================== */
+function addPopup(map, layer, overlay, popupElement, year){
+  map.on('singleclick', function(evt){
+    var resolution = map.getView().getResolution();
+    var url = layer.getSource().getFeatureInfoUrl(
+      evt.coordinate, resolution, 'EPSG:3857',
+      {'INFO_FORMAT':'application/json','FEATURE_COUNT':10}
+    );
+    if(url){
+      fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.features && data.features.length > 0){
+          var props = data.features[0].properties;
+          var crime = document.getElementById('crimeType').value;
+          popupElement.innerHTML =
+            '<div class="popup-title">&#9656; State Intel Report</div>' +
+            '<div class="popup-item"><span class="popup-label">STATE</span><span class="popup-value">' + (props.state_name||'—') + '</span></div>' +
+            '<div class="popup-item"><span class="popup-label">YEAR</span><span class="popup-value">' + year + '</span></div>' +
+            '<div class="popup-item"><span class="popup-label">CRIME</span><span class="popup-value">' + crime.toUpperCase() + '</span></div>' +
+            '<div class="popup-item"><span class="popup-label">CASES</span><span class="popup-value" style="color:var(--accent-gold);">' + (props.total_cases !== undefined ? Number(props.total_cases).toLocaleString() : '—') + '</span></div>' +
+            '<div class="popup-item"><span class="popup-label">AREA km²</span><span class="popup-value">' + (props.area_km2 !== undefined ? Number(props.area_km2).toLocaleString(undefined,{maximumFractionDigits:2}) : '—') + '</span></div>' +
+            '<div class="popup-item"><span class="popup-label">CASES/km²</span><span class="popup-value" style="color:var(--accent-red);">' + (props.cases_per_km2 !== undefined ? Number(props.cases_per_km2).toFixed(4) : '—') + '</span></div>';
+          overlay.setPosition(evt.coordinate);
+          popupElement.style.display = 'block';
+        } else {
+          popupElement.style.display = 'none';
+        }
+      })
+      .catch(function(err){ console.log(err); });
+    }
+  });
+
+  map.on('movestart', function(){
+    popupElement.style.display = 'none';
+  });
+}
+
+/* =====================================
+   ENABLE POPUPS
+===================================== */
+addPopup(map1, layer2001, overlay1, document.getElementById('popup1'), '2001');
+addPopup(map2, layer2005, overlay2, document.getElementById('popup2'), '2005');
+addPopup(map3, layer2010, overlay3, document.getElementById('popup3'), '2010');
+
+</script>
+</body>
+</html>
