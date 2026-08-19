@@ -350,4 +350,4 @@ Add the appropriate license before public release if this project is intended to
 
 **Web GIS Crime Intelligence Dashboard**
 
-`GIS` · `WebGIS` · `PostGIS` · `PostgreSQL` · `GeoServer` · `QGIS` · `Python` · `OpenLayers` · `Spatial Analysis`
+`GIS` · `WebGIS` · `PostGIS` · `PostgreSQL` · `GeoServer` · `QGIS` · `OpenLayers` · `Spatial Analysis`
